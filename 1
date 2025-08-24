@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Discografía por Género</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    .tooltip {
+      position: absolute;
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>Discografía por Género y Año</h2>
+  <select id="genreFilter">
+    <option value="all">Todos los géneros</option>
+    <option value="Grunge">Grunge</option>
+    <option value="Rock Psicodélico">Rock Psicodélico</option>
+    <!-- Agrega más géneros -->
+  </select>
+  <svg width="1000" height="600"></svg>
+
+  <script src="data.js"></script>
+  <script>
+    const svg = d3.select("svg");
+    const tooltip = d3.select("body").append("div").attr("class", "tooltip").style("opacity", 0);
+
+    const genreFilter = document.getElementById("genreFilter");
+
+    function render(genre = "all") {
+      svg.selectAll("*").remove();
+
+      let albums = [];
+      for (const g in data) {
+        if (genre === "all" || g === genre) {
+          albums = albums.concat(data[g].map(d => ({ ...d, genre: g })));
+        }
+      }
+
+      const xScale = d3.scaleLinear()
+        .domain(d3.extent(albums, d => d.year))
+        .range([50, 950]);
+
+      const yScale = d3.scalePoint()
+        .domain([...new Set(albums.map(d => d.genre))])
+        .range([50, 550]);
+
+      svg.selectAll("circle")
+        .data(albums)
+        .enter()
+        .append("circle")
+        .attr("cx", d => xScale(d.year))
+        .attr("cy", d => yScale(d.genre))
+        .attr("r", 6)
+        .attr("fill", "#3498db")
+        .on("mouseover", (event, d) => {
+          tooltip.transition().duration(200).style("opacity", .9);
+          tooltip.html(`<strong>${d.title}</strong><br>${d.band}<br>${d.year}<br>${d.notes}`)
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", () => {
+          tooltip.transition().duration(500).style("opacity", 0);
+        });
+
+      // Ejes opcionales
+    }
+
+    genreFilter.addEventListener("change", () => {
+      render(genreFilter.value);
+    });
+
+    render();
+  </script>
+</body>
+</html>
